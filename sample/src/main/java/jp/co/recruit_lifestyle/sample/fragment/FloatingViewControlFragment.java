@@ -3,6 +3,7 @@ package jp.co.recruit_lifestyle.sample.fragment;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -155,14 +156,17 @@ public class FloatingViewControlFragment extends Fragment {
         }
 
         // launch service
+        final Class<? extends Service> service;
+        final String key;
         if (isCustomFloatingView) {
-            final Intent intent = new Intent(activity, CustomFloatingViewService.class);
-            intent.putExtra(CustomFloatingViewService.EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(activity));
-            ContextCompat.startForegroundService(activity, intent);
+            service = CustomFloatingViewService.class;
+            key = CustomFloatingViewService.EXTRA_CUTOUT_SAFE_AREA;
         } else {
-            final Intent intent = new Intent(activity, ChatHeadService.class);
-            intent.putExtra(ChatHeadService.EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(activity));
-            ContextCompat.startForegroundService(activity, intent);
+            service = ChatHeadService.class;
+            key = ChatHeadService.EXTRA_CUTOUT_SAFE_AREA;
         }
+        final Intent intent = new Intent(activity, service);
+        intent.putExtra(key, FloatingViewManager.findCutoutSafeArea(activity));
+        ContextCompat.startForegroundService(activity, intent);
     }
 }
