@@ -293,6 +293,7 @@ public class FloatingViewManager implements ScreenChangedListener, View.OnTouchL
     @Override
     public void onUpdateActionTrashIcon() {
         mTrashView.updateActionTrashIcon(mTargetFloatingView.getMeasuredWidth(), mTargetFloatingView.getMeasuredHeight(), mTargetFloatingView.getShape());
+        mTargetFloatingView.updateEnterTrashScale(mTrashView.getTrashIconWidth(), mTrashView.getTrashIconHeight(), mTargetFloatingView.getShape());
     }
 
     /**
@@ -364,11 +365,17 @@ public class FloatingViewManager implements ScreenChangedListener, View.OnTouchL
             // 重なり始めの場合
             if (isIntersecting && !isIntersect) {
                 mTargetFloatingView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                if (!mTrashView.hasActionTrashIcon()) {
+                    mTargetFloatingView.setScaleEnterTrashIcon(true);
+                }
                 mTrashView.setScaleTrashIcon(true);
             }
             // 重なり終わりの場合
             else if (!isIntersecting && isIntersect) {
                 mTargetFloatingView.setNormal();
+                if (!mTrashView.hasActionTrashIcon()) {
+                    mTargetFloatingView.setScaleEnterTrashIcon(false);
+                }
                 mTrashView.setScaleTrashIcon(false);
             }
 

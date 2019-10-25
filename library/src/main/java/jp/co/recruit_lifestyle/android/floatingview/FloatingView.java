@@ -16,6 +16,8 @@
 
 package jp.co.recruit_lifestyle.android.floatingview;
 
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -352,6 +354,10 @@ class FloatingView extends FrameLayout implements ViewTreeObserver.OnPreDrawList
      * 形を表す係数
      */
     private float mShape;
+
+    private float mEnterTrashMaxScale;
+    private ObjectAnimator mEnterAnimator;
+    private ObjectAnimator mExitAnimator;
 
     /**
      * FloatingViewのアニメーションを行うハンドラ
@@ -1479,6 +1485,46 @@ class FloatingView extends FrameLayout implements ViewTreeObserver.OnPreDrawList
         mAnimationHandler.setState(STATE_FINISHING);
         mIsMoveAccept = false;
         setVisibility(View.GONE);
+        setScaleEnterTrashIcon(false);
+    }
+
+    void setScaleEnterTrashIcon(boolean isEnter) {
+        cancelScaleAnimation();
+        if (isEnter) {
+            mEnterAnimator.start();
+        } else {
+            mExitAnimator.start();
+        }
+    }
+
+    private void cancelScaleAnimation() {
+        if (mEnterAnimator != null && mEnterAnimator.isStarted()) {
+            mEnterAnimator.cancel();
+        }
+
+        if (mExitAnimator != null && mExitAnimator.isStarted()) {
+            mExitAnimator.cancel();
+        }
+    }
+
+    void updateEnterTrashScale(float width, float height, float shape) {
+        final float newWidthScale = width / getMeasuredWidth() * shape;
+        final float newHeightScale = height / getMeasuredHeight() * shape;
+        final float scale = Math.max(newWidthScale, newHeightScale);
+        mEnterTrashMaxScale = scale;
+        mEnterAnimator = ObjectAnimator.ofPropertyValuesHolder(this, PropertyValuesHolder.ofFloat(SCALE_X, scale), PropertyValuesHolder.ofFloat(SCALE_Y, scale));
+        mEnterAnimator.setInterpolator(new OvershootInterpolator());
+        mEnterAnimator.setDuration(TrashView.TRASH_ICON_SCALE_DURATION_MILLIS);
+        mExitAnimator = ObjectAnimator.ofPropertyValuesHolder(this, PropertyValuesHolder.ofFloat(SCALE_X, 1.0f), PropertyValuesHolder.ofFloat(SCALE_Y, 1.0f));
+        mExitAnimator.setInterpolator(new OvershootInterpolator());
+        mExitAnimator.setDuration(TrashView.TRASH_ICON_SCALE_DURATION_MILLIS);
+    }
+
+    private void setScaleImmediately(boolean isEnter) {
+        cancelScaleAnimation();
+
+        setScaleX(isEnter ? mEnterTrashMaxScale : 1.0f);
+        setScaleY(isEnter ? mEnterTrashMaxScale : 1.0f);
     }
 
     int getState() {

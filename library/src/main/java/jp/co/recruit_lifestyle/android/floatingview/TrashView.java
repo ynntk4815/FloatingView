@@ -16,6 +16,7 @@
 
 package jp.co.recruit_lifestyle.android.floatingview;
 
+import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.Context;
@@ -67,7 +68,7 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
     /**
      * 削除アイコンの拡大・縮小のアニメーション時間
      */
-    private static final long TRASH_ICON_SCALE_DURATION_MILLIS = 200L;
+    static final long TRASH_ICON_SCALE_DURATION_MILLIS = 200L;
 
     /**
      * アニメーションなしの状態を表す定数
@@ -170,6 +171,9 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
      */
     private ObjectAnimator mExitScaleAnimator;
 
+    private ObjectAnimator mEnterColorAnimator;
+    private ObjectAnimator mExitColorAnimator;
+
     /**
      * アニメーションを行うハンドラ
      */
@@ -259,6 +263,11 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
 
         // 初回描画処理用
         getViewTreeObserver().addOnPreDrawListener(this);
+
+        mEnterColorAnimator = ObjectAnimator.ofObject(mFixedTrashIconView, "colorFilter", new ArgbEvaluator(), 0, 0xffff0000);
+        mEnterColorAnimator.setDuration(TRASH_ICON_SCALE_DURATION_MILLIS);
+        mExitColorAnimator = ObjectAnimator.ofObject(mFixedTrashIconView, "colorFilter", new ArgbEvaluator(), 0xffff0000, 0);
+        mExitColorAnimator.setDuration(TRASH_ICON_SCALE_DURATION_MILLIS);
     }
 
     /**
@@ -349,6 +358,16 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
         outRect.set(left, top, right, bottom);
     }
 
+    int getTrashIconWidth() {
+        final ImageView iconView = hasActionTrashIcon() ? mActionTrashIconView : mFixedTrashIconView;
+        return iconView.getMeasuredWidth();
+    }
+
+    int getTrashIconHeight() {
+        final ImageView iconView = hasActionTrashIcon() ? mActionTrashIconView : mFixedTrashIconView;
+        return iconView.getMeasuredHeight();
+    }
+
     /**
      * アクションする削除アイコンの設定を更新します。
      *
@@ -410,7 +429,7 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
      *
      * @return アクションする削除アイコンが存在する場合はtrue
      */
-    private boolean hasActionTrashIcon() {
+    boolean hasActionTrashIcon() {
         return mActionTrashIconBaseWidth != 0 && mActionTrashIconBaseHeight != 0;
     }
 
@@ -483,6 +502,12 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
     void setScaleTrashIcon(boolean isEnter) {
         // アクションアイコンが設定されていなければ何もしない
         if (!hasActionTrashIcon()) {
+            cancelColorTrashAnimation();
+            if (isEnter) {
+                mEnterColorAnimator.start();
+            } else {
+                mExitColorAnimator.start();
+            }
             return;
         }
 
@@ -536,6 +561,16 @@ class TrashView extends FrameLayout implements ViewTreeObserver.OnPreDrawListene
         // 枠外アニメーション
         if (mExitScaleAnimator != null && mExitScaleAnimator.isStarted()) {
             mExitScaleAnimator.cancel();
+        }
+    }
+
+    private void cancelColorTrashAnimation() {
+        if (mEnterColorAnimator != null && mEnterColorAnimator.isStarted()) {
+            mEnterColorAnimator.cancel();
+        }
+
+        if (mExitColorAnimator != null && mExitColorAnimator.isStarted()) {
+            mExitColorAnimator.cancel();
         }
     }
 
